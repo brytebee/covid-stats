@@ -1,22 +1,55 @@
-import axios from "axios";
-import React, { useState, useEffect } from "react";
+import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import Countries from './components/Countries';
+import NamePagination from './components/NamePagination';
+import Pagination from './components/Pagination';
 
 const App = () => {
-  const [stats, setStats] = useState([]);
+  const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [statPerPage, setStatPerPage] = useState(10);
+  const [countriesPerPage] = useState(12);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchCountries = async () => {
+      const date = new Date().toISOString().split('T')[0];
       setLoading(true);
-      const res = axios.get("");
+      const res = await axios.get(
+        `https://api.covid19tracking.narrativa.com/api/${date}`
+      );
+      const dateString = date.toString();
+      setCountries(Object.values(res.data.dates[dateString].countries));
+      setLoading(false);
     };
+
+    fetchCountries(countries);
   }, []);
+
+  const indexOfLastCountry = countriesPerPage * currentPage;
+  const indexOfFirstCountry = indexOfLastCountry - countriesPerPage;
+  const currentCountries = countries.slice(
+    indexOfFirstCountry,
+    indexOfLastCountry
+  );
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div className="container mt-5">
       <h1>Covid stats</h1>
-      <p>This app shows a snapshot of covid stats</p>
+      <Countries countries={currentCountries} loading={loading} />
+      <Pagination
+        countriesPerPage={countriesPerPage}
+        totalCountries={countries.length}
+        paginate={paginate}
+        countries={countries}
+      />
+      <NamePagination
+        countriesPerPage={countriesPerPage}
+        totalCountries={countries.length}
+        paginate={paginate}
+        countries={countries}
+      />
     </div>
   );
 };
